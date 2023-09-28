@@ -2,11 +2,12 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+
 const spawn = require('child_process').spawn;
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+// const io = socketIo(server);
 const path = require('path');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const fs = require('fs');
@@ -23,6 +24,7 @@ app.use(bodyParser.json());
 
 const uploadRouter = require('./routes/upload');
 const deleteRouter = require('./routes/delete');
+const { userInfo } = require('os');
 app.use('/', uploadRouter);
 app.use('/', deleteRouter);
 
@@ -59,110 +61,135 @@ app.get("/", function (req, res) {
       res.send(doc)
     });
 
-
     io.on('connection', (socket) => {
+      // console.log('socket connected');
+        socket.on('disconnect', () => {});
 
-      socket.on('add-hisab', async (data) => {
+        socket.on('add-hisab', async (data) => {
         console.log(data);
-        // collection.createIndex(data)
-      // collection.insertMany(product)
-      await collection.insertOne(data);
+          // collection.createIndex(data)
+        // collection.insertMany(product)
+        await collection.insertOne(data);
+        
       
-     
+        });
+      
+      socket.on("hisab", async(data)=>{
+
+        const query = {};
+      const cursor = collection.find(query);
+      const doc = await cursor.toArray();
+        console.log("room data", data);
+        socket.emit('hisab', doc)
+      
+      })
+      
       });
 
 
+    // io.on('connection', (socket) => {
+
+    //   socket.on('add-hisab', async (data) => {
+    //     console.log(data);
+    //     // collection.createIndex(data)
+    //   // collection.insertMany(product)
+    //   await collection.insertOne(data);
+      
+     
+    //   });
+
+
       
     
-      // try {
-      //   // Start the streaming process
-      //   await startStreaming();
-      //   socket.emit('stream-status', 'Live stream is running');
-      // } catch (error) {
-      //   console.error('Error starting the stream:', error);
-      //   socket.emit('stream-status', 'Error starting the stream');
-      // }
+    //   // try {
+    //   //   // Start the streaming process
+    //   //   await startStreaming();
+    //   //   socket.emit('stream-status', 'Live stream is running');
+    //   // } catch (error) {
+    //   //   console.error('Error starting the stream:', error);
+    //   //   socket.emit('stream-status', 'Error starting the stream');
+    //   // }
     
-      // Handle the start streaming event
-      socket.on('start-stream', async ({fileurl, loop, urlkey}) => { 
+    //   // Handle the start streaming event
+    //   socket.on('start-stream', async ({fileurl, loop, urlkey}) => { 
     
-        const inputFilePath = path.resolve(__dirname, `${fileurl}`);
+    //     const inputFilePath = path.resolve(__dirname, `${fileurl}`);
         
-        const url = 'http://localhost:8000/video-live';
+    //     const url = 'http://localhost:8000/video-live';
 
-        const videoPath = "./video.mp4";
+    //     const videoPath = "./video.mp4";
        
       
       
-        const inputFilePath1 = `https://obhistream-server.vercel.app/video_file/${fileurl}`
-        console.log('Start streaming event received', urlkey);
-        // axios.get('https://www.youtube.com/watch?v=RLzC55ai0eo').then(res => {
-        //   const data = (res.data);
-        //   console.log(data);
-        const ffmpegProcess = spawn(ffmpegPath, ['-stream_loop', loop, '-re', '-i', url, 
-        '-c', 'copy',
-        '-f', 'flv', urlkey]);
+    //     const inputFilePath1 = `https://obhistream-server.vercel.app/video_file/${fileurl}`
+    //     console.log('Start streaming event received', urlkey);
+    //     // axios.get('https://www.youtube.com/watch?v=RLzC55ai0eo').then(res => {
+    //     //   const data = (res.data);
+    //     //   console.log(data);
+    //     const ffmpegProcess = spawn(ffmpegPath, ['-stream_loop', loop, '-re', '-i', url, 
+    //     '-c', 'copy',
+    //     '-f', 'flv', urlkey]);
         
-        // const ffmpegCommand = [
-        //   '-f', 'lavfi',
-        //   '-i', 'anullsrc=cl=stereo:r=44100',
-        //   '-f', 'x11grab',
-        //   '-framerate', '30',
-        //   '-s', '1920x1080',
-        //   '-i', ':0.0',
-        //   '-c:v', 'libx264',
-        //   '-profile:v', 'main',
-        //   '-pix_fmt', 'yuv420p',
-        //   '-preset', 'ultrafast',
-        //   '-g', '30',
-        //   '-b:v', '2500k',
-        //   '-c:a', 'aac',
-        //   '-ar', '44100',
-        //   '-b:a', '128k',
-        //   '-f', 'flv',
-        //   'rtmp://a.rtmp.youtube.com/live2/YOUR_STREAM_KEY',
-        // ];
-        // const ffmpegProcess = spawn(ffmpegPath, ['-stream_loop', '-1', '-re', '-i', url, 
-        // '-vcodec', 'libx264', '-preset', 'veryfast', '-r', '30', '-g', '(30 * 2)', '-b:v', '1500k',
-        // '-acodec', 'libmp3lame', '-ar', '44100', '-b:a', '712000', '-bufsize', '128k', 
-        // '-f', 'flv', outputUrl]);
+    //     // const ffmpegCommand = [
+    //     //   '-f', 'lavfi',
+    //     //   '-i', 'anullsrc=cl=stereo:r=44100',
+    //     //   '-f', 'x11grab',
+    //     //   '-framerate', '30',
+    //     //   '-s', '1920x1080',
+    //     //   '-i', ':0.0',
+    //     //   '-c:v', 'libx264',
+    //     //   '-profile:v', 'main',
+    //     //   '-pix_fmt', 'yuv420p',
+    //     //   '-preset', 'ultrafast',
+    //     //   '-g', '30',
+    //     //   '-b:v', '2500k',
+    //     //   '-c:a', 'aac',
+    //     //   '-ar', '44100',
+    //     //   '-b:a', '128k',
+    //     //   '-f', 'flv',
+    //     //   'rtmp://a.rtmp.youtube.com/live2/YOUR_STREAM_KEY',
+    //     // ];
+    //     // const ffmpegProcess = spawn(ffmpegPath, ['-stream_loop', '-1', '-re', '-i', url, 
+    //     // '-vcodec', 'libx264', '-preset', 'veryfast', '-r', '30', '-g', '(30 * 2)', '-b:v', '1500k',
+    //     // '-acodec', 'libmp3lame', '-ar', '44100', '-b:a', '712000', '-bufsize', '128k', 
+    //     // '-f', 'flv', outputUrl]);
     
-        ffmpegProcess.stdout.on('data', (data) => {
-              console.log(data.toString());
-            });
-        ffmpegProcess.stderr.on('data', (data) => {
-                  console.log(data.toString());
-                });
-        ffmpegProcess.on('close', (code) => {
-          console.log(`child process exited with code ${code}`);
-        });
-        // Handle errors
-        ffmpegProcess.on('error', (err) => {
-            console.error(`Error spawning ffmpeg: ${err}`);
-        });
+    //     ffmpegProcess.stdout.on('data', (data) => {
+    //           console.log(data.toString());
+    //         });
+    //     ffmpegProcess.stderr.on('data', (data) => {
+    //               console.log(data.toString());
+    //             });
+    //     ffmpegProcess.on('close', (code) => {
+    //       console.log(`child process exited with code ${code}`);
+    //     });
+    //     // Handle errors
+    //     ffmpegProcess.on('error', (err) => {
+    //         console.error(`Error spawning ffmpeg: ${err}`);
+    //     });
 
     
-        // Send a confirmation message to the client
-        socket.emit('stream-started', 'Live stream has started');
-      });
-      // });
+    //     // Send a confirmation message to the client
+    //     socket.emit('stream-started', 'Live stream has started');
+    //   });
+    //   // });
     
-      // Handle the stop streaming event
-      socket.on('stop-stream', () => {
-        console.log('Stop streaming event received');
+    //   // Handle the stop streaming event
+    //   socket.on('stop-stream', () => {
+    //     console.log('Stop streaming event received');
     
-        // Stop the FFmpeg process or take necessary actions to stop streaming
-        console.log('kill: SIGINT')
-        ffmpegProcess.kill('SIGINT')
-        // Send a confirmation message to the client
-        socket.emit('stream-stopped', 'Live stream has stopped');
-      });
+    //     // Stop the FFmpeg process or take necessary actions to stop streaming
+    //     console.log('kill: SIGINT')
+    //     ffmpegProcess.kill('SIGINT')
+    //     // Send a confirmation message to the client
+    //     socket.emit('stream-stopped', 'Live stream has stopped');
+    //   });
     
     
-      socket.on('disconnect', () => {
+    //   socket.on('disconnect', () => {
         
-      });
-    });
+    //   });
+    // });
 
   }
   catch (e) {
@@ -229,6 +256,30 @@ app.get('/video-live', function(req, res){
 
 
 
-server.listen(8000, () => {
+const server2 = server.listen(8000, () => {
   console.log('Server is running on port 8000');
 });
+
+const io = require("socket.io")(server2, {
+  pingTimeout: 60000,
+  cors:{
+    origin: "http://localhost:5173",
+  },
+})
+
+
+// const token2 = "808032"
+// io.use( async (socket, next)=>{
+// try{
+//   const token = socket.handshake.query.token;
+//   token = token2;
+//   next();
+// }
+// catch (err){}
+
+// })
+
+
+
+
+
