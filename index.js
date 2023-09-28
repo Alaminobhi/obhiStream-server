@@ -263,7 +263,7 @@ const server2 = server.listen(8000, () => {
 const io = require("socket.io")(server2, {
   pingTimeout: 60000,
   cors:{
-    origin: "https://obhistream.web.app",
+    origin: "*",
   },
 })
 
