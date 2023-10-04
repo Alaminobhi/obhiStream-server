@@ -32,6 +32,55 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + "/index.html");
 });
 
+async function run1() {
+
+  const uri = "mongodb+srv://alaminobhi2:obhi8032@cluster0.edvmx.mongodb.net/emaJohnStore?retryWrites=true&w=majority";
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+try {
+
+  await client.connect();
+  // Get the database and collection on which to run the operation
+  const collection = client.db().collection("products");
+  console.log("You successfully connected to MongoDB!");
+
+  app.post('/addItem', async (req, res) => {
+    console.log(req.body);
+      // collection.createIndex(data)
+    // collection.insertMany(product)
+    await collection.insertOne(req.body);
+    res.send(req.body);
+   
+
+    });
+
+
+  app.get('/products', async (req, res) => {
+    const query = {};
+    const cursor = collection.find(query);
+    const doc = await cursor.toArray();
+    res.send(doc)
+  });
+
+}
+catch (e) {
+  console.error(e);
+}
+finally {
+  // Ensures that the client will close when you finish/error
+  // await client.close();
+}
+}
+run1().catch(console.dir);
+
+
   
   async function run() {
     // const uri = `mongodb+srv://Obhi:Obhi8032@cluster0.edvmx.mongodb.net/hisab-nikash?retryWrites=true&w=majority`;
