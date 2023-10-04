@@ -54,6 +54,17 @@ app.get("/", function (req, res) {
     const collection = client.db().collection("hisabs");
     console.log("You successfully connected to MongoDB!");
 
+    app.post('/added-hisab', async (req, res) => {
+      console.log(req.body);
+        // collection.createIndex(data)
+      // collection.insertMany(product)
+      await collection.insertOne(req.body);
+      res.send(req.body);
+     
+  
+      });
+
+
     app.get('/all-hisab', async (req, res) => {
       const query = {};
       const cursor = collection.find(query);
@@ -253,9 +264,6 @@ app.get('/video-live', function(req, res){
 });
 
 
-
-
-
 const server2 = server.listen(8000, () => {
   console.log('Server is running on port 8000');
 });
@@ -263,21 +271,10 @@ const server2 = server.listen(8000, () => {
 const io = require("socket.io")(server2, {
   pingTimeout: 60000,
   cors:{
-    origin: "https://obhistream.web.app",
+    origin: "http://localhost:5173",
   },
 })
 
-
-// const token2 = "808032"
-// io.use( async (socket, next)=>{
-// try{
-//   const token = socket.handshake.query.token;
-//   token = token2;
-//   next();
-// }
-// catch (err){}
-
-// })
 
 
 
