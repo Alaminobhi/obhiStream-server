@@ -5,6 +5,12 @@ const socketIo = require('socket.io');
 
 const spawn = require('child_process').spawn;
 
+const cheerio = require('cheerio');
+const randomUseragent = require('random-useragent');
+
+const rua = randomUseragent.getRandom();
+
+
 const app = express();
 const server = http.createServer(app);
 // const io = socketIo(server);
@@ -24,7 +30,13 @@ app.use(bodyParser.json());
 
 const uploadRouter = require('./routes/upload');
 const deleteRouter = require('./routes/delete');
-const { userInfo } = require('os');
+const crexlives = require('./routes/crexlive');
+const crexlives2 = require('./routes/crex2live');
+const cricbuzzlive = require('./routes/cricbuzzlive');
+
+app.use('/', cricbuzzlive);
+app.use('/', crexlives);
+app.use('/', crexlives2);
 app.use('/', uploadRouter);
 app.use('/', deleteRouter);
 
@@ -143,6 +155,57 @@ run1().catch(console.dir);
         socket.emit('hisab', doc)
       
       })
+
+      socket.on('start-stream', async ({fileurl, loop, urlkey}) => { 
+    
+        const inputFilePath = path.resolve(__dirname, `${fileurl}`);
+        
+        const url = 'http://localhost:8000/video-live';
+
+        const videoPath = "./video.mp4";
+       
+      
+        const inputFilePath1 = `https://obhistream-server.vercel.app/video_file/${fileurl}`
+        console.log('Start streaming event received', urlkey);
+        // axios.get('https://www.youtube.com/watch?v=RLzC55ai0eo').then(res => {
+        //   const data = (res.data);
+        //   console.log(data);
+        const ffmpegProcess = spawn(ffmpegPath, ['-stream_loop', loop, '-re', '-i', videoPath, 
+        '-c', 'copy',
+        '-f', 'flv', urlkey]);
+        
+        ffmpegProcess.stdout.on('data', (data) => {
+              console.log(data.toString());
+            });
+        ffmpegProcess.stderr.on('data', (data) => {
+                  console.log(data.toString());
+                });
+        ffmpegProcess.on('close', (code) => {
+          console.log(`child process exited with code ${code}`);
+        });
+        // Handle errors
+        ffmpegProcess.on('error', (err) => {
+            console.error(`Error spawning ffmpeg: ${err}`);
+        });
+
+    
+        // Send a confirmation message to the client
+        socket.emit('stream-started', 'Live stream has started');
+      });
+
+
+      socket.on('stop-stream', () => {
+        console.log('Stop streaming event received');
+    
+        // Stop the FFmpeg process or take necessary actions to stop streaming
+        console.log('kill: SIGINT')
+        ffmpegProcess.kill('SIGINT')
+        // Send a confirmation message to the client
+        socket.emit('stream-stopped', 'Live stream has stopped');
+      });
+
+
+
       
       });
 
@@ -285,15 +348,15 @@ run().catch(console.dir);
     
   // });
 
-
-app.get('/video-live', function(req, res){
+  app.get('/video-live', function(req, res){
   
     const range = req.headers.range;
     if(!range){
         res.status(400).send("Requires Range header");
     }
-    const video = 'https://www.youtube.com/watch?v=RLzC55ai0eo';
+    const video = 'https://www.youtube.com/watch?v=RLzC55ai0eo'; 
     const videoPath = "./video.mp4";
+    
     const videoSize = fs.statSync(videoPath).size;
     // console.log("size of video is:", videoSize);
     const CHUNK_SIZE = 10**6; //1 MB
@@ -313,14 +376,22 @@ app.get('/video-live', function(req, res){
 });
 
 
+
 const server2 = server.listen(8000, () => {
   console.log('Server is running on port 8000');
 });
 
+// const io = new Server(WS_PORT, {
+//   /* options */
+//   cors: {
+//     origin: '*',
+//   },
+// })
+
 const io = require("socket.io")(server2, {
   pingTimeout: 60000,
   cors:{
-    origin: "http://localhost:5173",
+    origin: '*',
   },
 })
 
